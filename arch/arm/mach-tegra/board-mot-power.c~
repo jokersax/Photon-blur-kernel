@@ -1159,3 +1159,4 @@ static int disable_rtc_alarms(struct device *dev, void *data)
 {
 	return (rtc_alarm_irq_enable((struct rtc_device *)dev, 0));
 }
+

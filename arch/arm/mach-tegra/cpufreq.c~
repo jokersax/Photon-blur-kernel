@@ -62,16 +62,14 @@ extern atomic_t hotplug_policy;
 
 /* Frequency table index must be sequential starting at 0 and
    frequencies must be ascending*/
-static struct cpufreq_frequency_table freq_table_1200[] = {
+static struct cpufreq_frequency_table freq_table_1400[] = {
         { 0, 216000 },
-        { 1, 312000 },
-        { 2, 456000 },
-        { 3, 608000 },
-        { 4, 750000 },
-        { 5, 912000 },
-        { 6, 1000000 },
-        { 7, 1200000 },
-        { 8, CPUFREQ_TABLE_END },
+        { 1, 456000 },
+        { 2, 750000 },
+        { 3, 1000000 },
+        { 4, 1200000 },
+        { 5, 1400000 },
+        { 6, CPUFREQ_TABLE_END },
 
 };
 
@@ -342,7 +340,7 @@ static int tegra_cpufreq_driver_init(struct cpufreq_policy *pol)
 	pol->cpuinfo.transition_latency = 0;
 
 	if (usage.MaxKHz >= 1000000)
-               freq_table = freq_table_1200;
+               freq_table = freq_table_1400;
 	 else
 		freq_table = freq_table_750;
 	cpufreq_frequency_table_cpuinfo(pol, freq_table);
