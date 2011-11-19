@@ -75,12 +75,13 @@ static struct cpufreq_frequency_table freq_table_1000[] = {
 
 static struct cpufreq_frequency_table freq_table_1400[] = {
 	{ 0, 216000 },
-	{ 1, 456000 },
-	{ 2, 750000 },
-	{ 3, 1000000 },
-	{ 4, 1200000 },
-	{ 5, 1400000 },
-	{ 6, CPUFREQ_TABLE_END },
+	{ 1, 312000 },
+	{ 2, 456000 },
+	{ 3, 750000 },
+	{ 4, 1000000 },
+	{ 5, 1200000 },
+	{ 6, 1400000 },
+	{ 7, CPUFREQ_TABLE_END },
 };
 
 static struct cpufreq_frequency_table freq_table_750[] = {

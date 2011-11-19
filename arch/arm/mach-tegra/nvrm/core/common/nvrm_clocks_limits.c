@@ -87,9 +87,10 @@ NvU32 FakeShmooVmaxIndex = NVRM_VOLTAGE_STEPS - 1;
 #define MAX_CPU_OC_FREQ (1400000)
 
 NvU32 FakeShmooVoltages[] = {
-    770,
+    750,
+    775,
     800,
-    875,
+    900,
     1000,
     1200,
     1300,
@@ -102,6 +103,7 @@ NvRmScaledClkLimits FakepScaledCpuLimits = {
     // Clock table
     {
 	216000,
+	312000,
     	456000,
     	750000,
     	1000000,
