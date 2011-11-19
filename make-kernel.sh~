@@ -8,3 +8,4 @@ make menuconfig
 KBUILD_BUILD_VERSION="joker-newoc-highpro"
 export KBUILD_BUILD_VERSION
 make -o3 zImage
+make clean
