@@ -1,0 +1,1 @@
+cmd_drivers/misc/spi-tty/spi-tty.o := arm-linux-gnueabi-ld -EL    -r -o drivers/misc/spi-tty/spi-tty.o drivers/misc/spi-tty/mdm6600_spi.o drivers/misc/spi-tty/spi_tty.o drivers/misc/spi-tty/spi_msg.o 

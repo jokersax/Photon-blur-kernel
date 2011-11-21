@@ -1,0 +1,1 @@
+cmd_drivers/input/misc/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o drivers/input/misc/built-in.o drivers/input/misc/keychord.o drivers/input/misc/isl29030.o drivers/input/misc/uinput.o drivers/input/misc/bu52014hfv.o 

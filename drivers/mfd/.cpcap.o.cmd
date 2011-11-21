@@ -1,0 +1,1 @@
+cmd_drivers/mfd/cpcap.o := arm-linux-gnueabi-ld -EL    -r -o drivers/mfd/cpcap.o drivers/mfd/cpcap-core.o drivers/mfd/cpcap-irq.o drivers/mfd/cpcap-regacc.o drivers/mfd/cpcap-key.o drivers/mfd/cpcap-usb-det.o drivers/mfd/cpcap-adc.o drivers/mfd/cpcap-uc.o drivers/mfd/cpcap-3mm5.o 

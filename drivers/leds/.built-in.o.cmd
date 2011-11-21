@@ -1,0 +1,1 @@
+cmd_drivers/leds/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o drivers/leds/built-in.o drivers/leds/led-core.o drivers/leds/led-class.o drivers/leds/leds-cpcap-button.o drivers/leds/leds-cpcap-rgb.o drivers/leds/leds-lm3530.o drivers/leds/leds-lm3532.o 

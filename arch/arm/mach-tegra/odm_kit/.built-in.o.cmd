@@ -1,0 +1,1 @@
+cmd_arch/arm/mach-tegra/odm_kit/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o arch/arm/mach-tegra/odm_kit/built-in.o arch/arm/mach-tegra/odm_kit/adaptations/built-in.o arch/arm/mach-tegra/odm_kit/platform/built-in.o arch/arm/mach-tegra/odm_kit/query/built-in.o 

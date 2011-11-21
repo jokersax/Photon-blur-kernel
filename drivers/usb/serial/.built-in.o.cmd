@@ -1,0 +1,1 @@
+cmd_drivers/usb/serial/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o drivers/usb/serial/built-in.o drivers/usb/serial/usbserial.o drivers/usb/serial/moto_modem.o drivers/usb/serial/qsc6085_modem.o drivers/usb/serial/mdm6600_modem.o drivers/usb/serial/moto_flashmdm.o 

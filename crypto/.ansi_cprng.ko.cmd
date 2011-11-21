@@ -1,0 +1,1 @@
+cmd_crypto/ansi_cprng.ko := arm-linux-gnueabi-ld -EL -r  -T /home/justin/Mopho-/Photon-blur-kernel/scripts/module-common.lds --build-id -o crypto/ansi_cprng.ko crypto/ansi_cprng.o crypto/ansi_cprng.mod.o
