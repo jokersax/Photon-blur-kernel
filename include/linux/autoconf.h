@@ -1,12 +1,16 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.32.9
+<<<<<<< HEAD
  * Wed Nov 23 06:04:09 2011
+=======
+ * Fri Nov 18 03:56:33 2011
+>>>>>>> c0c1c439a363a2d0d4fd1ac4e9eb02fee1a2576e
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_ANDROID 1
 #define CONFIG_FRAME_WARN 1024
-#define CONFIG_JBD2_MODULE 1
+#define CONFIG_JBD2 1
 #define CONFIG_CPCAP_WATCHDOG_KERNEL_SPACE 1
 #define CONFIG_SENSORS_KXTF9 1
 #define CONFIG_USB_ANDROID_RNDIS_WCEIS 1
@@ -96,7 +100,7 @@
 #define CONFIG_NF_CONNTRACK_SANE 1
 #define CONFIG_CRYPTO_DES 1
 #define CONFIG_GENERIC_TRACER 1
-#define CONFIG_EXT4_FS_MODULE 1
+#define CONFIG_EXT4_FS 1
 #define CONFIG_PREEMPT 1
 #define CONFIG_USB_HID 1
 #define CONFIG_NF_DEFRAG_IPV4 1
