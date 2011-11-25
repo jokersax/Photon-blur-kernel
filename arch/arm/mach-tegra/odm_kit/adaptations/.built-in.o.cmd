@@ -1,1 +1,0 @@
-cmd_arch/arm/mach-tegra/odm_kit/adaptations/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o arch/arm/mach-tegra/odm_kit/adaptations/built-in.o arch/arm/mach-tegra/odm_kit/adaptations/gpio_ext/built-in.o arch/arm/mach-tegra/odm_kit/adaptations/tmon/built-in.o arch/arm/mach-tegra/odm_kit/adaptations/pmu/built-in.o arch/arm/mach-tegra/odm_kit/adaptations/misc/built-in.o 

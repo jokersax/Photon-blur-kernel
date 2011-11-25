@@ -1,1 +1,0 @@
-cmd_drivers/misc/vni/rmnet3_drv.ko := arm-linux-gnueabi-ld -EL -r  -T /home/justin/Mopho-/Photon-blur-kernel/scripts/module-common.lds --build-id -o drivers/misc/vni/rmnet3_drv.ko drivers/misc/vni/rmnet3_drv.o drivers/misc/vni/rmnet3_drv.mod.o

@@ -1,1 +1,0 @@
-cmd_drivers/power/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o drivers/power/built-in.o drivers/power/power_supply.o drivers/power/cpcap-charger.o drivers/power/cpcap-usb-charger.o drivers/power/cpcap-factory.o drivers/power/cpcap-battery.o 

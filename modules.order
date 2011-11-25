@@ -1,8 +1,0 @@
-kernel/fs/ext4/ext4.ko
-kernel/fs/jbd2/jbd2.ko
-kernel/crypto/ansi_cprng.ko
-kernel/drivers/misc/vni/rmnet0_drv.ko
-kernel/drivers/misc/vni/rmnet1_drv.ko
-kernel/drivers/misc/vni/rmnet2_drv.ko
-kernel/drivers/misc/vni/rmnet3_drv.ko
-kernel/drivers/scsi/scsi_wait_scan.ko

@@ -1,1 +1,0 @@
-cmd_arch/arm/mach-tegra/nvos/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o arch/arm/mach-tegra/nvos/built-in.o arch/arm/mach-tegra/nvos/nvos.o arch/arm/mach-tegra/nvos/nvos_page.o arch/arm/mach-tegra/nvos/nvustring.o arch/arm/mach-tegra/nvos/nvos_exports.o 

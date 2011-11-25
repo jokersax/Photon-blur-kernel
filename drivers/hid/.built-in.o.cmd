@@ -1,1 +1,0 @@
-cmd_drivers/hid/built-in.o :=  arm-linux-gnueabi-ld -EL    -r -o drivers/hid/built-in.o drivers/hid/hid.o drivers/hid/hid-apple.o drivers/hid/hid-belkin.o drivers/hid/hid-logitech.o drivers/hid/hid-microsoft.o drivers/hid/hid-motorola.o drivers/hid/usbhid/built-in.o 

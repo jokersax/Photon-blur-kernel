@@ -1,1 +1,0 @@
-cmd_drivers/net/usb/qcusbnet/QCUSBNet.o := arm-linux-gnueabi-ld -EL    -r -o drivers/net/usb/qcusbnet/QCUSBNet.o drivers/net/usb/qcusbnet/qcusbnet.o drivers/net/usb/qcusbnet/qmidevice.o drivers/net/usb/qcusbnet/qmi.o 
