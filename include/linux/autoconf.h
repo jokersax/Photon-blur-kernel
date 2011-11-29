@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.32.9
- * Fri Nov 25 15:40:23 2011
+ * Mon Nov 28 18:05:57 2011
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_ANDROID 1
@@ -168,7 +168,7 @@
 #define CONFIG_NF_CONNTRACK_PPTP 1
 #define CONFIG_PAGEFLAGS_EXTENDED 1
 #define CONFIG_NR_CPUS 2
-#define CONFIG_MAX_3D_OC_FREQ 300000
+#define CONFIG_MAX_3D_OC_FREQ 325000
 #define CONFIG_ARCH_HAS_DEFAULT_IDLE 1
 #define CONFIG_CRYPTO_MANAGER 1
 #define CONFIG_KEYS 1

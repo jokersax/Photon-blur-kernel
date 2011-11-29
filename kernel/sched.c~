@@ -77,8 +77,6 @@
 
 #include "sched_cpupri.h"
 
-#include "sched_tty.h"
-
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
@@ -274,6 +272,8 @@ struct task_group {
 	struct task_group *parent;
 	struct list_head siblings;
 	struct list_head children;
+
+	struct autogroup *autogroup;
 };
 
 #ifdef CONFIG_USER_SCHED
@@ -357,7 +357,6 @@ static inline struct task_group *task_group(struct task_struct *p)
 #elif defined(CONFIG_CGROUP_SCHED)
 	tg = container_of(task_subsys_state(p, cpu_cgroup_subsys_id),
 				struct task_group, css);
-	tty_sched_check_attach(p, &tg);
 #else
 	tg = &init_task_group;
 #endif
@@ -375,6 +374,8 @@ static inline void set_task_rq(struct task_struct *p, unsigned int cpu)
 #ifdef CONFIG_RT_GROUP_SCHED
 	p->rt.rt_rq  = task_group(p)->rt_rq[cpu];
 	p->rt.parent = task_group(p)->rt_se[cpu];
+static inline struct task_group *
+autogroup_task_group(struct task_struct *p, struct task_group *tg);
 #endif
 }
 
@@ -383,7 +384,14 @@ static inline void set_task_rq(struct task_struct *p, unsigned int cpu)
 static inline void set_task_rq(struct task_struct *p, unsigned int cpu) { }
 static inline struct task_group *task_group(struct task_struct *p)
 {
-	return NULL;
+	struct task_group *tg;
+ 	struct cgroup_subsys_state *css;
+ 
+ 	css = task_subsys_state_check(p, cpu_cgroup_subsys_id,
+ 			lockdep_is_held(&task_rq(p)->lock));
+	tg = container_of(css, struct task_group, css);
+
+	return autogroup_task_group(p, tg);
 }
 
 #endif	/* CONFIG_GROUP_SCHED */
@@ -643,6 +651,8 @@ void check_preempt_curr(struct rq *rq, struct task_struct *p, int flags)
 
 static inline int cpu_of(struct rq *rq)
 {
+
+
 #ifdef CONFIG_SMP
 	return rq->cpu;
 #else
@@ -1819,7 +1829,7 @@ static void update_sysctl(void);
 #include "sched_idletask.c"
 #include "sched_fair.c"
 #include "sched_rt.c"
-#include "sched_tty.c"
+#include "sched_autogroup.c"
 #ifdef CONFIG_SCHED_DEBUG
 # include "sched_debug.c"
 #endif
@@ -1865,13 +1875,13 @@ static void update_avg(u64 *avg, u64 sample)
 	*avg += diff >> 3;
 }
 
-enqueue_task(struct rq *rq, struct task_struct *p, int wakeup, bool head)
+static void enqueue_task(struct rq *rq, struct task_struct *p, int wakeup)
 {
 	if (wakeup)
 		p->se.start_runtime = p->se.sum_exec_runtime;
 
 	sched_info_queued(p);
-	p->sched_class->enqueue_task(rq, p, wakeup, head);
+	p->sched_class->enqueue_task(rq, p, wakeup);
 	p->se.on_rq = 1;
 }
 
@@ -1892,7 +1902,6 @@ static void dequeue_task(struct rq *rq, struct task_struct *p, int sleep)
 	p->sched_class->dequeue_task(rq, p, sleep);
 	p->se.on_rq = 0;
 }
-
 
 /*
  * __normal_prio - return the priority that is based on the static prio
@@ -9452,7 +9461,7 @@ void __init sched_init(void)
 #ifdef CONFIG_GROUP_SCHED
 	list_add(&init_task_group.list, &task_groups);
 	INIT_LIST_HEAD(&init_task_group.children);
-
+	autogroup_init(&init_task);
 #ifdef CONFIG_USER_SCHED
 	INIT_LIST_HEAD(&root_task_group.children);
 	init_task_group.parent = &root_task_group;

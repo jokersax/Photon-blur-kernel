@@ -272,6 +272,8 @@ struct task_group {
 	struct task_group *parent;
 	struct list_head siblings;
 	struct list_head children;
+
+	struct autogroup *autogroup;
 };
 
 #ifdef CONFIG_USER_SCHED
@@ -372,6 +374,8 @@ static inline void set_task_rq(struct task_struct *p, unsigned int cpu)
 #ifdef CONFIG_RT_GROUP_SCHED
 	p->rt.rt_rq  = task_group(p)->rt_rq[cpu];
 	p->rt.parent = task_group(p)->rt_se[cpu];
+static inline struct task_group *
+autogroup_task_group(struct task_struct *p, struct task_group *tg);
 #endif
 }
 
@@ -380,7 +384,14 @@ static inline void set_task_rq(struct task_struct *p, unsigned int cpu)
 static inline void set_task_rq(struct task_struct *p, unsigned int cpu) { }
 static inline struct task_group *task_group(struct task_struct *p)
 {
-	return NULL;
+	struct task_group *tg;
+ 	struct cgroup_subsys_state *css;
+ 
+ 	css = task_subsys_state_check(p, cpu_cgroup_subsys_id,
+ 			lockdep_is_held(&task_rq(p)->lock));
+	tg = container_of(css, struct task_group, css);
+
+	return autogroup_task_group(p, tg);
 }
 
 #endif	/* CONFIG_GROUP_SCHED */
@@ -640,6 +651,8 @@ void check_preempt_curr(struct rq *rq, struct task_struct *p, int flags)
 
 static inline int cpu_of(struct rq *rq)
 {
+
+
 #ifdef CONFIG_SMP
 	return rq->cpu;
 #else
@@ -1816,6 +1829,7 @@ static void update_sysctl(void);
 #include "sched_idletask.c"
 #include "sched_fair.c"
 #include "sched_rt.c"
+#include "sched_autogroup.c"
 #ifdef CONFIG_SCHED_DEBUG
 # include "sched_debug.c"
 #endif
@@ -9447,7 +9461,7 @@ void __init sched_init(void)
 #ifdef CONFIG_GROUP_SCHED
 	list_add(&init_task_group.list, &task_groups);
 	INIT_LIST_HEAD(&init_task_group.children);
-
+	autogroup_init(&init_task);
 #ifdef CONFIG_USER_SCHED
 	INIT_LIST_HEAD(&root_task_group.children);
 	init_task_group.parent = &root_task_group;
@@ -9933,6 +9947,7 @@ static void free_sched_group(struct task_group *tg)
 {
 	free_fair_sched_group(tg);
 	free_rt_sched_group(tg);
+	autogroup_free(tg);
 	kfree(tg);
 }
 
