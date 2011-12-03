@@ -1429,8 +1429,10 @@ static void tegra_shutdown(struct uart_port *u)
 	struct tegra_uart_port *t;
 	unsigned long flags;
 
-	spin_lock_irqsave(&u->lock, flags);
 	t = container_of(u, struct tegra_uart_port, uport);
+	flush_workqueue(t->rx_work_queue);
+
+	spin_lock_irqsave(&u->lock, flags);
 	UART_TRACE(u, UART_TRACE_LEVEL_CONTROL, "+tegra_shutdown\n");
 
 	tegra_uart_hw_deinit(t);

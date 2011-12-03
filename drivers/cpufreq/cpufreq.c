@@ -703,10 +703,16 @@ static ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf)
 
 static ssize_t store_UV_mV_table(struct cpufreq_policy *policy, const char *buf, size_t count)
 {
-	int ret = sscanf( buf, "%i %i %i %i %i %i %i", &FakeShmoo_UV_mV_Ptr[6], 
-								&FakeShmoo_UV_mV_Ptr[5], &FakeShmoo_UV_mV_Ptr[4], 
-								&FakeShmoo_UV_mV_Ptr[3], &FakeShmoo_UV_mV_Ptr[2], 
-								&FakeShmoo_UV_mV_Ptr[1], &FakeShmoo_UV_mV_Ptr[0] );
+
+	int ret = sscanf( buf, "%i %i %i %i %i %i %i", 
+			&FakeShmoo_UV_mV_Ptr[6],
+			&FakeShmoo_UV_mV_Ptr[5],
+			&FakeShmoo_UV_mV_Ptr[4],
+			&FakeShmoo_UV_mV_Ptr[3],
+			&FakeShmoo_UV_mV_Ptr[2],
+			&FakeShmoo_UV_mV_Ptr[1],
+			&FakeShmoo_UV_mV_Ptr[0] );
+
 	if (ret != 1)
 		return -EINVAL;
 
@@ -1037,6 +1043,7 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 	unsigned int j;
 #ifdef CONFIG_HOTPLUG_CPU
 	int sibling;
+	struct cpufreq_policy *cp=NULL;
 #endif
 
 	if (cpu_is_offline(cpu))
@@ -1085,11 +1092,10 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 
 	/* Set governor before ->init, so that driver could check it */
 #ifdef CONFIG_HOTPLUG_CPU
-	struct cpufreq_policy *cp;
 	for_each_online_cpu(sibling) {
 		cp = per_cpu(cpufreq_cpu_data, sibling);
-		if (cp && cp->governor &&
-		    (cpumask_test_cpu(cpu, cp->related_cpus))) {
+		dprintk("found sibling %d\n", sibling);
+		if (cp != NULL) {
 			dprintk("found sibling CPU, copying policy\n");
 			policy->governor = cp->governor;
 			policy->min = cp->min;
@@ -1296,12 +1302,28 @@ static int __cpufreq_remove_dev(struct sys_device *sys_dev)
 
 	unlock_policy_rwsem_write(cpu);
 
+	cpufreq_debug_enable_ratelimit();
+
+#ifdef CONFIG_HOTPLUG_CPU
+	/* when the CPU which is the parent of the kobj is hotplugged
+	 * offline, check for siblings, and create cpufreq sysfs interface
+	 * and symlinks
+	 */
+	if (unlikely(cpumask_weight(data->cpus) > 1)) {
+		/* first sibling now owns the new sysfs dir */
+		cpumask_clear_cpu(cpu, data->cpus);
+		cpufreq_add_dev(get_cpu_sysdev(cpumask_first(data->cpus)));
+
+		/* finally remove our own symlink */
+		lock_policy_rwsem_write(cpu);
+		__cpufreq_remove_dev(sys_dev);
+	}
+#endif
+
 	free_cpumask_var(data->related_cpus);
 	free_cpumask_var(data->cpus);
 	kfree(data);
-	per_cpu(cpufreq_cpu_data, cpu) = NULL;
 
-	cpufreq_debug_enable_ratelimit();
 	return 0;
 }
 
@@ -1854,17 +1876,8 @@ static int __cpufreq_set_policy(struct cpufreq_policy *data,
 			dprintk("governor switch\n");
 
 			/* end old governor */
-			if (data->governor) {
-				/*
-				 * Need to release the rwsem around governor
-				 * stop due to lock dependency between
-				 * cancel_delayed_work_sync and the read lock
-				 * taken in the delayed work handler.
-				 */
-				unlock_policy_rwsem_write(data->cpu);
+			if (data->governor)
 				__cpufreq_governor(data, CPUFREQ_GOV_STOP);
-				lock_policy_rwsem_write(data->cpu);
-			}
 
 			/* start new governor */
 			data->governor = policy->governor;

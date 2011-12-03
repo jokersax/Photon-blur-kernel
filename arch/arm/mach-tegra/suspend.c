@@ -47,6 +47,7 @@
 #include <nvrm_memmgr.h>
 #include <nvrm_power_private.h>
 #include "nvrm/core/common/nvrm_message.h"
+#include "nvrm_module.h"
 
 #include "power.h"
 #include "board.h"
@@ -91,6 +92,8 @@ struct suspend_context
 
 volatile struct suspend_context tegra_sctx;
 
+unsigned long save_avp_resume_addr = 0;
+
 #ifdef CONFIG_HOTPLUG_CPU
 extern void tegra_board_nvodm_suspend(void);
 extern void tegra_board_nvodm_resume(void);
@@ -98,7 +101,7 @@ extern void tegra_board_nvodm_resume(void);
 static void __iomem *pmc = IO_ADDRESS(TEGRA_PMC_BASE);
 static void __iomem *clk_rst = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
 static void __iomem *flow_ctrl = IO_ADDRESS(TEGRA_FLOW_CTRL_BASE);
-static void __iomem *evp_reset = IO_ADDRESS(TEGRA_EXCEPTION_VECTORS_BASE)+0x100;
+static void __iomem *evp_reset = IO_ADDRESS(TEGRA_EXCEPTION_VECTORS_BASE) + 0x100;
 static void __iomem *tmrus = IO_ADDRESS(TEGRA_TMRUS_BASE);
 #endif
 
@@ -489,6 +492,46 @@ static unsigned int iram_save_size = 0;
 static void __iomem *iram_code = IO_ADDRESS(TEGRA_IRAM_CODE_AREA);
 static void __iomem *iram_avp_resume = IO_ADDRESS(TEGRA_IRAM_BASE);
 
+#define TEGRA_AVP_RESET_VECTOR_ADDR	\
+		(IO_ADDRESS(TEGRA_EXCEPTION_VECTORS_BASE) + 0x200)
+#define FLOW_CTRL_HALT_COP_EVENTS	IO_ADDRESS(TEGRA_FLOW_CTRL_BASE + 0x4)
+#define FLOW_MODE_STOP			(0x2 << 29)
+#define FLOW_MODE_NONE			0x0
+
+int tegra_avp_resume(unsigned long reset_addr)
+{
+	int ret = 0;
+	unsigned long timeout;
+
+	/* stop AVP via flow controller */
+	writel(FLOW_MODE_STOP, FLOW_CTRL_HALT_COP_EVENTS);
+
+	/* program AVP reset vector with resume address */
+	writel(reset_addr, TEGRA_AVP_RESET_VECTOR_ADDR);
+
+	/* reset AVP */
+	NvRmModuleReset(s_hRmGlobal, NvRmModuleID_Avp);
+
+	/* unhalt AVP via flow controller */
+	writel(FLOW_MODE_NONE, FLOW_CTRL_HALT_COP_EVENTS);
+
+	/* the AVP firmware will reprogram its reset vector as the kernel
+	 * starts, so a dead kernel can be detected by polling this value */
+	timeout = jiffies + msecs_to_jiffies(2000);
+	while (time_before(jiffies, timeout)) {
+		if (readl(TEGRA_AVP_RESET_VECTOR_ADDR) != reset_addr)
+			break;
+		cpu_relax();
+	}
+
+	/* check if AVP firmware reprogrammed it reset vector or not
+	 * if not notify this error */
+	if (readl(TEGRA_AVP_RESET_VECTOR_ADDR) == reset_addr)
+		ret = -EINVAL;
+
+	return ret;
+}
+
 static void tegra_suspend_dram(bool lp0_ok)
 {
 	static unsigned long cpu_timer_32k = 0;
@@ -700,10 +743,12 @@ static int tegra_suspend_prepare_late(void)
 		return -EIO;
 	}
 
-	/* The AVP stores its resume address in the first word of IRAM
-	 * Write this resume address to SCRATCH39, where the warmboot
-	 * code can later find it */
-	writel(*(volatile unsigned int *)iram_avp_resume, pmc + PMC_SCRATCH39);
+	/* write 0 to PMC_SCRATCH39 so that AVP halts after WB0 resume
+	 * we resume AVP after the basic resume on CPU is done */
+	writel(0, pmc + PMC_SCRATCH39);
+	save_avp_resume_addr = *((volatile unsigned int *)iram_avp_resume);
+	rmb();
+
 #endif
 	disable_irq(INT_SYS_STATS_MON);
 	return tegra_iovmm_suspend();
@@ -711,6 +756,8 @@ static int tegra_suspend_prepare_late(void)
 
 static void tegra_suspend_wake(void)
 {
+	int ret = 0;
+
 	tegra_iovmm_resume();
 	enable_irq(INT_SYS_STATS_MON);
 
@@ -724,6 +771,10 @@ static void tegra_suspend_wake(void)
 	}
 	tegra_board_nvodm_resume();
 #endif
+	ret = tegra_avp_resume(save_avp_resume_addr);
+	if (ret < 0)
+		pr_err("%s: AVP failed to resume\n", __func__);
+
 	wake_log_status();
 }
 
@@ -734,12 +785,14 @@ extern void tegra_irq_suspend(void);
 extern void tegra_gpio_suspend(void);
 extern void tegra_clk_suspend(void);
 extern void tegra_dma_suspend(void);
+extern void tegra_timer_suspend(void);
 
 extern void tegra_pinmux_resume(void);
 extern void tegra_irq_resume(void);
 extern void tegra_gpio_resume(void);
 extern void tegra_clk_resume(void);
 extern void tegra_dma_resume(void);
+extern void tegra_timer_resume(void);
 
 #define MC_SECURITY_START	0x6c
 #define MC_SECURITY_SIZE	0x70
@@ -758,6 +811,7 @@ static int tegra_suspend_enter(suspend_state_t state)
 		tegra_irq_suspend();
 		tegra_dma_suspend();
 		tegra_pinmux_suspend();
+		tegra_timer_suspend();
 		tegra_gpio_suspend();
 		tegra_clk_suspend();
 
@@ -795,6 +849,7 @@ static int tegra_suspend_enter(suspend_state_t state)
 
 		tegra_clk_resume();
 		tegra_gpio_resume();
+		tegra_timer_resume();
 		tegra_pinmux_resume();
 		tegra_dma_resume();
 		tegra_irq_resume();

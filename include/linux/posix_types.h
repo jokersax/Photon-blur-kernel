@@ -22,7 +22,7 @@
 #define __NFDBITS	(8 * sizeof(unsigned long))
 
 #undef __FD_SETSIZE
-#define __FD_SETSIZE	1024
+#define __FD_SETSIZE	2048
 
 #undef __FDSET_LONGS
 #define __FDSET_LONGS	(__FD_SETSIZE/__NFDBITS)

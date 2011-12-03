@@ -803,6 +803,15 @@ static inline void *cpcap_get_keydata(struct cpcap_device *cpcap)
 	return cpcap->keydata;
 }
 
+#ifdef CONFIG_MFD_CPCAP_AJ_CHARGER_WORKAROUND
+#define CPCAP_CHARGER_NOTIFICATION 0x01
+#define CPCAP_AJ_NOTIFICATION 0x02
+#define CPCAP_APP_NOTIFICATION 0x04
+#define CPCAP_RECHECK_NOTIFICATION 0x08
+bool cpcap_charger_aj_workaround(struct cpcap_device *cpcap,
+				int event, bool on);
+#endif
+
 int cpcap_regacc_write(struct cpcap_device *cpcap, enum cpcap_reg reg,
 		       unsigned short value, unsigned short mask);
 

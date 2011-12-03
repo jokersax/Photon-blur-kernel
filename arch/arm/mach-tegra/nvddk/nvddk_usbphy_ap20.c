@@ -1305,6 +1305,16 @@ Ap20UsbPhyWaitForStableClock(
         TimeOut -= 10;
     } while (PhyClkValid != USB3_IF_USB_SUSP_CTRL_0_USB_PHY_CLK_VALID_SET);
 
+    /* Wait for the AHB USB clock to become valid or hardware timeout */
+    do {
+	PhyClkValid = USB_IF_REG_READ_VAL(SUSP_CTRL, USB_CLKEN);
+	if (!TimeOut)
+		return NvError_Timeout;
+
+	NvOsWaitUS(10);
+	TimeOut -= 10;
+	} while (PhyClkValid != USB3_IF_USB_SUSP_CTRL_0_USB_CLKEN_SET);
+
     return NvSuccess;
 }
 

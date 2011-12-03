@@ -18,6 +18,7 @@
 
 unsigned int __machine_arch_type;
 
+
 #include <linux/compiler.h>	/* for inline */
 #include <linux/types.h>	/* for size_t */
 #include <linux/stddef.h>	/* for NULL */
@@ -149,6 +150,7 @@ void __memzero (__ptr_t s, size_t n)
 	if (n & 1)
 		*u.ucp++ = 0;
 }
+
 
 static inline __ptr_t memcpy(__ptr_t __dest, __const __ptr_t __src,
 			    size_t __n)

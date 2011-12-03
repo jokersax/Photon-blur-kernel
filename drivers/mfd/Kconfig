@@ -311,6 +311,13 @@ config MFD_CPCAP
 	help
 	 Say yes here if you want to include drivers for the CPCAP chip.
 
+config MFD_CPCAP_AJ_CHARGER_WORKAROUND
+	tristate "Support for AJ and Charger workaround"
+	depends on MFD_CPCAP
+	default n
+	help
+	 Say yes here if you want workaround the noise issue.
+
 endmenu
 
 menu "Multimedia Capabilities Port drivers"

@@ -129,8 +129,7 @@ static int tegra_ehci_hub_control (
 		ehci_writel(ehci, (temp & ~PORT_RWC_BITS) & ~PORT_PE, status_reg);
 		spin_unlock_irqrestore (&ehci->lock, flags);
 		return retval;
-	} else if (typeReq == SetPortFeature &&
-			wValue == USB_PORT_FEAT_SUSPEND) {
+	} else if (typeReq == SetPortFeature && wValue == USB_PORT_FEAT_SUSPEND) {
 		spin_lock_irqsave(&ehci->lock, flags);
 		temp = ehci_readl(ehci, status_reg);
 		if ((temp & PORT_PE) == 0 || (temp & PORT_RESET) != 0) {
@@ -165,8 +164,7 @@ static int tegra_ehci_hub_control (
 	 * to set this bit to a zero after the resume duration is timed in the
 	 * driver.
 	 */
-	else if (typeReq == ClearPortFeature &&
-			wValue == USB_PORT_FEAT_SUSPEND) {
+	else if (typeReq == ClearPortFeature && wValue == USB_PORT_FEAT_SUSPEND) {
 		spin_lock_irqsave(&ehci->lock, flags);
 		temp = ehci_readl(ehci, status_reg);
 		if ((temp & PORT_RESET) || !(temp & PORT_PE)) {
@@ -187,19 +185,16 @@ static int tegra_ehci_hub_control (
 		usbsts_reg = ehci_readl(ehci, &ehci->regs->status);
 		udelay(20);
 
-		if (handshake(ehci, &ehci->regs->status,
-					STS_SRI, STS_SRI, 2000))
+		if (handshake(ehci, &ehci->regs->status, STS_SRI, STS_SRI, 2000))
 			pr_err("%s: timeout set for STS_SRI\n", __func__);
 
 		usbsts_reg = ehci_readl(ehci, &ehci->regs->status);
 		ehci_writel(ehci, usbsts_reg, &ehci->regs->status);
 
-		if (handshake(ehci, &ehci->regs->status,
-					STS_SRI, 0, 2000))
+		if (handshake(ehci, &ehci->regs->status, STS_SRI, 0, 2000))
 			pr_err("%s: timeout clear STS_SRI\n", __func__);
 
-		if (handshake(ehci, &ehci->regs->status,
-					STS_SRI, STS_SRI, 2000))
+		if (handshake(ehci, &ehci->regs->status, STS_SRI, STS_SRI, 2000))
 			pr_err("%s: timeout set STS_SRI\n", __func__);
 
 		udelay(20);
@@ -549,18 +544,18 @@ static int tegra_ehci_bus_resume(struct usb_hcd *hcd)
 	}
 #endif
 
+	if (!ehci->host_resumed)
+		tegra_ehci_power_up(hcd);
+
 	if (!pdata->otg_mode && pdata->id_detect==ID_PIN_CABLE_ID) {
 		u32 status;
 		/* read ID pin status */
 		status = readl(hcd->regs + TEGRA_USB_PHY_WAKEUP_REG_OFFSET);
 		/* If Id pin is high no host then return */
 		if (status & TEGRA_USB_ID_PIN_STATUS) {
+			tegra_ehci_power_down(hcd);
 			return 0;
 		}
-	}
-
-	if (!ehci->host_resumed) {
-		tegra_ehci_power_up(hcd);
 	}
 
 	return ehci_bus_resume(hcd);
@@ -826,6 +821,9 @@ static int tegra_ehci_resume(struct platform_device * pdev)
 	/* initialize the platform data pointer */
 	pdata = hcd->self.controller->platform_data;
 
+	if (!ehci->host_resumed)
+		tegra_ehci_power_up(hcd);
+
 	/* read otgsc register for ID pin status */
 	status = readl(hcd->regs + TEGRA_USB_PHY_WAKEUP_REG_OFFSET);
 
@@ -833,6 +831,7 @@ static int tegra_ehci_resume(struct platform_device * pdev)
 	if (pdata->otg_mode && ehci->transceiver) {
 		/* check if ID pin is high then no host return */
 		if (status & TEGRA_USB_ID_PIN_STATUS) {
+			tegra_ehci_power_down(hcd);
 			return 0;
 		}
 		else {
@@ -840,6 +839,8 @@ static int tegra_ehci_resume(struct platform_device * pdev)
 			set_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags);
 			ehci->host_reinited = 1;
 			ehci->transceiver->state = OTG_STATE_A_HOST;
+			tegra_ehci_restart(hcd, HC_STATE_RUNNING);
+			return 0;
 		}
 	}
 #endif
@@ -847,17 +848,13 @@ static int tegra_ehci_resume(struct platform_device * pdev)
 	if (!pdata->otg_mode && pdata->id_detect==ID_PIN_CABLE_ID) {
 		/* If no Id pin then return */
 		if (status & TEGRA_USB_ID_PIN_STATUS) {
+			tegra_ehci_power_down(hcd);
 			return 0;
 		}
 	}
 
-	if (!ehci->host_resumed) {
-		tegra_ehci_power_up(hcd);
-		if (pdata->otg_mode)
-			tegra_ehci_restart(hcd, HC_STATE_RUNNING);
-		else if (!pdata->fast_wakeup)
+	if (!pdata->fast_wakeup)
 			tegra_ehci_restart(hcd, hcd->state);
-	}
 
 	return 0;
 }

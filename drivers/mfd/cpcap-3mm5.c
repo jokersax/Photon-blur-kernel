@@ -119,6 +119,10 @@ static void hs_handler(enum cpcap_irqs irq, void *data)
 		data_3mm5->unsupported_headset=0;
 
 		cpcap_uc_stop(data_3mm5->cpcap, CPCAP_BANK_PRIMARY, CPCAP_MACRO_5);
+#ifdef CONFIG_MFD_CPCAP_AJ_CHARGER_WORKAROUND
+		cpcap_charger_aj_workaround(data_3mm5->cpcap,
+						CPCAP_AJ_NOTIFICATION, 0);
+#endif
 	} else {
 		cpcap_regacc_write(data_3mm5->cpcap, CPCAP_REG_TXI,
 				   (CPCAP_BIT_MB_ON2 | CPCAP_BIT_PTT_CMP_EN),
@@ -154,6 +158,10 @@ static void hs_handler(enum cpcap_irqs irq, void *data)
 		cpcap_irq_unmask(data_3mm5->cpcap, CPCAP_IRQ_UC_PRIMACRO_5);
 
 		cpcap_uc_start(data_3mm5->cpcap, CPCAP_BANK_PRIMARY, CPCAP_MACRO_5);
+#ifdef CONFIG_MFD_CPCAP_AJ_CHARGER_WORKAROUND
+		cpcap_charger_aj_workaround(data_3mm5->cpcap,
+						CPCAP_AJ_NOTIFICATION, 1);
+#endif
 	}
 
 	switch_set_state(&data_3mm5->sdev, new_state);
@@ -216,6 +224,56 @@ static void mac13_handler(enum cpcap_irqs irq, void *data)
 	audio_low_power_clear(data_3mm5, &data_3mm5->audio_low_pwr_mac13);
 	schedule_delayed_work(&data_3mm5->work, msecs_to_jiffies(200));
 }
+
+#ifdef CONFIG_MFD_CPCAP_AJ_CHARGER_WORKAROUND
+/* define charger 0x01
+	aj      0x02
+	app     0x04
+
+	if charger & aj both on, enable amplifier,
+	if charger or aj off, disable
+*/
+bool cpcap_charger_aj_workaround(struct cpcap_device *cpcap, int event, bool on)
+{
+    unsigned short int value, value1;
+    static unsigned int flag;
+    bool workaround = false;
+
+    value = CPCAP_BIT_PGA_DAC_EN|CPCAP_BIT_ALEFT_HS_DAC_SW|
+			CPCAP_BIT_ARIGHT_HS_DAC_SW|CPCAP_BIT_ST_DAC_SW;
+    value1 = CPCAP_BIT_ALEFT_HS_CDC_SW | CPCAP_BIT_ARIGHT_HS_CDC_SW;
+
+    if (event == CPCAP_RECHECK_NOTIFICATION) {
+	if ((flag&0x03) == 0x03) {
+		cpcap_regacc_write(cpcap, CPCAP_REG_RXSDOA, value, value);
+		cpcap_regacc_write(cpcap, CPCAP_REG_RXOA, value1, value1);
+	}
+	return 0;
+    }
+
+    if (on)
+	flag |= event;
+    else
+	flag &= ~event;
+
+    if ((flag&0x03) == 0x03)
+	workaround = true;
+
+    if (workaround) {
+	if ((event != 0x04) && (on)) {
+		cpcap_regacc_write(cpcap, CPCAP_REG_RXSDOA, value, value);
+		cpcap_regacc_write(cpcap, CPCAP_REG_RXOA, value1, value1);
+	}
+    } else {
+	if (!(flag&0x04) && (!on)) {
+		cpcap_regacc_write(cpcap, CPCAP_REG_RXSDOA, 0, value);
+		cpcap_regacc_write(cpcap, CPCAP_REG_RXOA, 0, value1);
+	}
+    }
+
+    return workaround;
+}
+#endif
 
 static int __init cpcap_3mm5_probe(struct platform_device *pdev)
 {

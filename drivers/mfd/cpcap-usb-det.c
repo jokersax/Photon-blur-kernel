@@ -99,6 +99,14 @@
 			     CPCAP_BIT_CHRGCURR1_S | \
 			     CPCAP_BIT_DP_S_LS)
 
+#define SENSE_WHISPER_LD2 (CPCAP_BIT_ID_GROUND_S | \
+			     CPCAP_BIT_VBUSVLD_S   | \
+			     CPCAP_BIT_SESSVLD_S   | \
+			     CPCAP_BIT_CHRGCURR1_S | \
+			     CPCAP_BIT_SE1_S       | \
+			     CPCAP_BIT_DM_S_LS     | \
+			     CPCAP_BIT_DP_S_LS)
+
 #define ADC_AUDIO_THRES     0x12C
 
 enum cpcap_det_state {
@@ -625,6 +633,16 @@ static void notify_accy(struct cpcap_usb_det_data *data, enum cpcap_accy accy)
 
 	dev_info(&data->cpcap->spi->dev, "notify_accy: accy=%d\n", accy);
 
+#ifdef CONFIG_MFD_CPCAP_AJ_CHARGER_WORKAROUND
+	if (accy == CPCAP_ACCY_CHARGER) {
+		cpcap_charger_aj_workaround(data->cpcap,
+					CPCAP_CHARGER_NOTIFICATION, 1);
+	} else {
+		cpcap_charger_aj_workaround(data->cpcap,
+					CPCAP_CHARGER_NOTIFICATION, 0);
+	}
+#endif
+
 	if ((data->usb_accy != CPCAP_ACCY_NONE) && (data->usb_dev != NULL)) {
 		if (!((data->usb_accy == CPCAP_ACCY_USB_DEVICE) && (accy == CPCAP_ACCY_CHARGER))) {
 			platform_device_del(data->usb_dev);
@@ -827,7 +845,8 @@ static void detection_work(struct work_struct *work)
 			/* Special handling of CHARGER/SPD undetect. */
 			data->state = CHARGER;
 			notify_whisper_switch(data, CPCAP_ACCY_CHARGER);
-		} else if (data->sense == SENSE_WHISPER_SMART) {
+		} else if (data->sense == SENSE_WHISPER_SMART ||
+			   data->sense == SENSE_WHISPER_LD2) {
 
 			if (cpcap_usb_det_debug)
 				pr_info("cpcap_usb_det: WHISPER_SMART_DOCK\n");
@@ -964,6 +983,10 @@ static void detection_work(struct work_struct *work)
 			} else {
 				if (cpcap_usb_det_debug)
 					pr_info("cpcap_usb_det: Waiting for VBUS to drain before switching on RVRS CHRG\n");
+
+				/* Unmask the IDFLOAT irq in case the line is not floating by the
+				 * time we read the sense bits */
+				cpcap_irq_unmask(data->cpcap, CPCAP_IRQ_IDFLOAT);
 			}
 		} else if (!isVBusValid) {
 			if (cpcap_usb_det_debug)

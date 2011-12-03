@@ -31,11 +31,12 @@ struct as_io_context {
 	sector_t seek_mean;
 };
 
+struct cfq_queue;
 struct cfq_io_context {
 	void *key;
 	unsigned long dead_key;
 
-        void *cfqq[2];
+	struct cfq_queue *cfqq[2];
 
 	struct io_context *ioc;
 

@@ -674,23 +674,7 @@ rcu_start_gp(struct rcu_state *rsp, unsigned long flags)
 	struct rcu_node *rnp = rcu_get_root(rsp);
 
 	if (!cpu_needs_another_gp(rsp, rdp)) {
-		if (rnp->completed == rsp->completed) {
-			spin_unlock_irqrestore(&rnp->lock, flags);
-			return;
-		}
-		spin_unlock(&rnp->lock);	 /* irqs remain disabled. */
-
-		/*
-		 * Propagate new ->completed value to rcu_node structures
-		 * so that other CPUs don't have to wait until the start
-		 * of the next grace period to process their callbacks.
-		 */
-		rcu_for_each_node_breadth_first(rsp, rnp) {
-			spin_lock(&rnp->lock);	 /* irqs already disabled. */
-			rnp->completed = rsp->completed;
-			spin_unlock(&rnp->lock); /* irqs remain disabled. */
-		}
-		local_irq_restore(flags);
+		spin_unlock_irqrestore(&rnp->lock, flags);
 		return;
 	}
 
@@ -1488,7 +1472,7 @@ static int rcu_pending(int cpu)
  * 1 if so.  This function is part of the RCU implementation; it is -not-
  * an exported member of the RCU API.
  */
-int rcu_needs_cpu(int cpu)
+static int rcu_needs_cpu_quick_check(int cpu)
 {
 	/* RCU callbacks either ready or pending? */
 	return per_cpu(rcu_sched_data, cpu).nxtlist ||
@@ -1798,8 +1782,10 @@ do { \
 	} \
 } while (0)
 
-void __init __rcu_init(void)
+void __init rcu_init(void)
 {
+	int i;
+
 	rcu_bootup_announce();
 #ifdef CONFIG_RCU_CPU_STALL_DETECTOR
 	printk(KERN_INFO "RCU-based detection of stalled CPUs is enabled.\n");
@@ -1808,6 +1794,15 @@ void __init __rcu_init(void)
 	RCU_INIT_FLAVOR(&rcu_bh_state, rcu_bh_data);
 	__rcu_init_preempt();
 	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
+
+	/*
+	 * We don't need protection against CPU-hotplug here because
+	 * this is called early in boot, before either interrupts
+	 * or the scheduler are operational.
+	 */
+	cpu_notifier(rcu_cpu_notify, 0);
+	for_each_online_cpu(i)
+		rcu_cpu_notify(NULL, CPU_UP_PREPARE, (void *)(long)i);
 }
 
 #include "rcutree_plugin.h"

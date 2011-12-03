@@ -539,6 +539,9 @@ static int test_ioctl(unsigned int cmd, unsigned long arg)
 	int retval = -EINVAL;
 	struct cpcap_regacc read_data;
 	struct cpcap_regacc write_data;
+#ifdef CONFIG_MFD_CPCAP_AJ_CHARGER_WORKAROUND
+	bool charge_aj_workaround;
+#endif
 
 	switch (cmd) {
 	case CPCAP_IOCTL_TEST_READ_REG:
@@ -571,9 +574,51 @@ static int test_ioctl(unsigned int cmd, unsigned long arg)
 												  write_data.reg,
 												  write_data.value,
 												  write_data.mask);
+#ifdef CONFIG_MFD_CPCAP_AJ_CHARGER_WORKAROUND
+		else {
+		/* it want to reset CODEC, before it, check whether
+		   charger and 3.5aj both on, if it is, not clear those bit
+		   record the status for clear when either diattached
+		*/
+			if ((write_data.reg == CPCAP_REG_RXSDOA)
+				|| (write_data.reg == CPCAP_REG_RXOA)) {
+				if (write_data.value == 0) {
+					charge_aj_workaround =
+						cpcap_charger_aj_workaround(
+							misc_cpcap,
+							CPCAP_APP_NOTIFICATION,
+							0);
+				    if (!charge_aj_workaround) {
+					retval = cpcap_regacc_write(misc_cpcap,
+						write_data.reg,
+						write_data.value,
+						write_data.mask);
+					cpcap_charger_aj_workaround(
+						misc_cpcap,
+						CPCAP_RECHECK_NOTIFICATION,
+						0);
+				    }
+				} else {
+					charge_aj_workaround =
+						cpcap_charger_aj_workaround(
+						misc_cpcap,
+						CPCAP_APP_NOTIFICATION, 1);
+					retval = cpcap_regacc_write(misc_cpcap,
+						write_data.reg,
+						write_data.value,
+						write_data.mask);
+				}
+			} else
+				retval = cpcap_regacc_write(misc_cpcap,
+						write_data.reg,
+						write_data.value,
+						write_data.mask);
+		}
+#else
 		else
 			retval = cpcap_regacc_write(misc_cpcap, write_data.reg,
 										write_data.value, write_data.mask);
+#endif
 	break;
 
 	default:

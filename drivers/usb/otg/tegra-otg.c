@@ -326,6 +326,10 @@ static int tegra_otg_resume(struct platform_device * pdev)
 	struct tegra_otg_data *tegra_otg = platform_get_drvdata(pdev);
 	unsigned int temp;
 
+	NvDdkUsbPhyPowerUp(tegra_otg->usb_phy, NV_FALSE, 0);
+
+	mdelay(2);
+
 	/* enable the cable ID and VBUS interrupts */
 	temp = readl(tegra_otg->regs + TEGRA_USB_WAKEUP_REG_OFFSET);
 	if (tegra_otg->id_connected)
@@ -335,6 +339,8 @@ static int tegra_otg_resume(struct platform_device * pdev)
 		temp &= ~TEGRA_USB_VBUS_INT_STATUS;
 	}
 	writel(temp, (tegra_otg->regs + TEGRA_USB_WAKEUP_REG_OFFSET));
+
+	NvDdkUsbPhyPowerDown(tegra_otg->usb_phy, NV_FALSE, 0);
 
 	return 0;
 }

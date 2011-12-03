@@ -314,9 +314,9 @@ NvRmPrivAp20GetPmRequest(
             NvRmPrivGetSocClockLimits(NvRmModuleID_Cpu)->MaxKHz;
 
         s_Cpu1OnMinKHz = NVRM_CPU1_ON_MIN_KHZ ?
-                         NVRM_CPU1_ON_MIN_KHZ : (MaxKHz / 2);
+                         NVRM_CPU1_ON_MIN_KHZ : (MaxKHz / 3);
         s_Cpu1OffMaxKHz = NVRM_CPU1_OFF_MAX_KHZ ?
-                          NVRM_CPU1_OFF_MAX_KHZ : (3 * MaxKHz / 4);
+                          NVRM_CPU1_OFF_MAX_KHZ : (3 * MaxKHz / 5);
         NV_ASSERT(s_Cpu1OnMinKHz < s_Cpu1OffMaxKHz);
     }
 
