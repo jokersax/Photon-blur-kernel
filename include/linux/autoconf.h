@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.32.9
- * Thu Dec  1 10:28:37 2011
+ * Sun Dec  4 14:22:54 2011
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_ANDROID 1
@@ -469,7 +469,6 @@
 #define CONFIG_ANDROID_LOW_MEMORY_KILLER 1
 #define CONFIG_CPU_PABRT_V7 1
 #define CONFIG_CPU_32 1
-#define CONFIG_RWSEM_GENERIC_SPINLOCK 1
 #define CONFIG_BRANCH_PROFILE_NONE 1
 #define CONFIG_NETFILTER 1
 #define CONFIG_INET6_ESP 1
@@ -606,6 +605,7 @@
 #define CONFIG_BACKLIGHT_GENERIC 1
 #define CONFIG_MTD 1
 #define CONFIG_ZONE_DMA_FLAG 1
+#define CONFIG_RWSEM_XCHGADD_ALGORITHM 1
 #define CONFIG_TEGRA_IOVMM_GART 1
 #define CONFIG_NET 1
 #define CONFIG_APANIC_MMC 1
