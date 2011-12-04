@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.32.9
- * Sun Dec  4 15:42:41 2011
+ * Sun Dec  4 16:59:44 2011
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_ANDROID 1
