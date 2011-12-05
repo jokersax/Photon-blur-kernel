@@ -249,7 +249,7 @@ config BOOST_PERIPHERALS
 
 config MAX_AVP_OC_FREQ
 	int "AVP Overclock Frequency"
-	default 280000
+	default 240000
         depends on FAKE_SHMOO && BOOST_PERIPHERALS
 
 config MAX_3D_OC_FREQ
