@@ -535,6 +535,7 @@ ENTRY(__cortex_a9_l2x0_restart)
 	str	r7, [r9, #L2X0_PREFETCH_OFFSET]
 	str	r4, [r9, #L2X0_AUX_CTRL]
 	mov     r4, #0x2                @ L2X0_DYNAMIC_CLK_GATING_EN
+	str     r4, [r9, #L2X0_PWR_CTRL]
 	cmp	r0, #0
 
 	beq	__reenable_l2x0
